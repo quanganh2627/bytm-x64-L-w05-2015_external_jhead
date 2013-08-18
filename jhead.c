@@ -130,9 +130,11 @@ void ErrNonfatal(char * msg, int a1, int a2)
 //--------------------------------------------------------------------------
 void FileTimeAsString(char * TimeStr)
 {
-    struct tm ts;
-    ts = *localtime(&ImageInfo.FileDateTime);
-    strftime(TimeStr, 20, "%Y:%m:%d %H:%M:%S", &ts);
+    struct tm *ts;
+    ts = localtime(&ImageInfo.FileDateTime);
+    if (ts != NULL) {
+       strftime(TimeStr, 20, "%Y:%m:%d %H:%M:%S", ts);
+    }
 }
 
 #if 0       // not used -- possible security risk with use of system, sprintf, etc.
