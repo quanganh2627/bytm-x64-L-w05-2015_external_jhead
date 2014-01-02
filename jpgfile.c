@@ -110,15 +110,18 @@ static void process_SOFn (const uchar * Data, int marker)
 //--------------------------------------------------------------------------
 void CheckSectionsAllocated(void)
 {
+    int to_add = SectionsAllocated/2;
+
     if (SectionsRead > SectionsAllocated){
         ErrFatal("allocation screwup");
     }
     if (SectionsRead >= SectionsAllocated){
-        SectionsAllocated += SectionsAllocated/2;
+        SectionsAllocated += to_add;
         Sections = (Section_t *)realloc(Sections, sizeof(Section_t)*SectionsAllocated);
         if (Sections == NULL){
             ErrFatal("could not allocate data for entire image");
         }
+        memset(&Sections[SectionsAllocated-to_add], 0, sizeof(Section_t)*to_add);
     }
 }
 
@@ -238,6 +241,7 @@ int ReadJpegSections (FILE * infile, ReadMode_t ReadMode)
                 if (HaveCom || ((ReadMode & READ_METADATA) == 0)){
                     // Discard this section.
                     free(Sections[--SectionsRead].Data);
+                    Sections[SectionsRead].Data = NULL;
                 }else{
                     process_COM(Data, itemlen);
                     HaveCom = TRUE;
@@ -250,6 +254,7 @@ int ReadJpegSections (FILE * infile, ReadMode_t ReadMode)
                 // this program will re-create this marker on absence of exif marker.
                 // hence no need to keep the copy from the file.
                 free(Sections[--SectionsRead].Data);
+                Sections[SectionsRead].Data = NULL;
                 break;
 
             case M_EXIF:
@@ -271,6 +276,7 @@ int ReadJpegSections (FILE * infile, ReadMode_t ReadMode)
                 }
                 // Oterwise, discard this section.
                 free(Sections[--SectionsRead].Data);
+                Sections[SectionsRead].Data = NULL;
                 break;
 
             case M_IPTC:
@@ -282,6 +288,7 @@ int ReadJpegSections (FILE * infile, ReadMode_t ReadMode)
                     // and we don't act on any part of it, so just display it at parse time.
                 }else{
                     free(Sections[--SectionsRead].Data);
+                    Sections[SectionsRead].Data = NULL;
                 }
                 break;
            
@@ -429,6 +436,7 @@ int ReadJpegSectionsFromBuffer (unsigned char* buffer, unsigned int buffer_size,
                 if (HaveCom || ((ReadMode & READ_METADATA) == 0)){
                     // Discard this section.
                     free(Sections[--SectionsRead].Data);
+                    Sections[SectionsRead].Data = NULL;
                 }else{
                     process_COM(Data, itemlen);
                     HaveCom = TRUE;
@@ -441,6 +449,7 @@ int ReadJpegSectionsFromBuffer (unsigned char* buffer, unsigned int buffer_size,
                 // this program will re-create this marker on absence of exif marker.
                 // hence no need to keep the copy from the file.
                 free(Sections[--SectionsRead].Data);
+                Sections[SectionsRead].Data = NULL;
                 break;
 
             case M_EXIF:
@@ -462,6 +471,7 @@ int ReadJpegSectionsFromBuffer (unsigned char* buffer, unsigned int buffer_size,
                 }
                 // Oterwise, discard this section.
                 free(Sections[--SectionsRead].Data);
+                Sections[SectionsRead].Data = NULL;
                 break;
 
             case M_IPTC:
@@ -473,6 +483,7 @@ int ReadJpegSectionsFromBuffer (unsigned char* buffer, unsigned int buffer_size,
                     // and we don't act on any part of it, so just display it at parse time.
                 }else{
                     free(Sections[--SectionsRead].Data);
+                    Sections[SectionsRead].Data = NULL;
                 }
                 break;
 
@@ -511,6 +522,7 @@ void DiscardData(void)
 
     for (a=0;a<SectionsRead;a++){
         free(Sections[a].Data);
+        Sections[a].Data = NULL;
     }
 
     memset(&ImageInfo, 0, sizeof(ImageInfo));
@@ -760,6 +772,7 @@ void DiscardAllButExif(void)
             IptcKeeper = Sections[a];
         }else{
             free(Sections[a].Data);
+            Sections[a].Data = NULL;
         }
     }
     SectionsRead = 0;
@@ -933,6 +946,7 @@ int RemoveSectionType(int SectionType)
         if (Sections[a].Type == SectionType){
             // Free up this section
             free (Sections[a].Data);
+            Sections[a].Data = NULL;
             // Move succeding sections back by one to close space in array.
             memmove(Sections+a, Sections+a+1, sizeof(Section_t) * (SectionsRead-a));
             SectionsRead -= 1;
@@ -981,6 +995,7 @@ int RemoveUnknownSections(void)
             default:
                 // Unknown.  Delete.
                 free (Sections[a].Data);
+                Sections[a].Data = NULL;
                 // Move succeding sections back by one to close space in array.
                 memmove(Sections+a, Sections+a+1, sizeof(Section_t) * (SectionsRead-a));
                 SectionsRead -= 1;
@@ -1037,7 +1052,7 @@ void ResetJpgfile(void)
         Sections = (Section_t *)malloc(sizeof(Section_t)*5);
         SectionsAllocated = 5;
     }
-
+    memset(Sections, 0, sizeof(Section_t)*SectionsAllocated);
     SectionsRead = 0;
     HaveAll = 0;
 }
