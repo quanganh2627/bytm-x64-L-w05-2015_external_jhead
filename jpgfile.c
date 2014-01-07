@@ -20,6 +20,10 @@ static int SectionsAllocated;
 static int SectionsRead;
 static int HaveAll;
 
+// mutex to protect above global data. ResetJpgfile() and DiscardData()
+// must be called in pairs to lock and unlock this mutex.
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 // Define the line below to turn on poor man's debugging output
 #undef SUPERDEBUG
 
@@ -528,6 +532,9 @@ void DiscardData(void)
     memset(&ImageInfo, 0, sizeof(ImageInfo));
     SectionsRead = 0;
     HaveAll = 0;
+
+    // we finished parsing file, unlock mutex.
+    pthread_mutex_unlock(&mutex);
 }
 
 //--------------------------------------------------------------------------
@@ -1048,6 +1055,9 @@ Section_t * CreateSection(int SectionType, unsigned char * Data, int Size)
 //--------------------------------------------------------------------------
 void ResetJpgfile(void)
 {
+    // before parsing, we need protect the global data.
+    pthread_mutex_lock(&mutex);
+
     if (Sections == NULL){
         Sections = (Section_t *)malloc(sizeof(Section_t)*5);
         SectionsAllocated = 5;
