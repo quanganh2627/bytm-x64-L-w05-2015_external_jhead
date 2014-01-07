@@ -297,7 +297,8 @@ static void saveAttributes(JNIEnv *env, jobject jobj, jstring jfilename, jstring
 #ifdef SUPERDEBUG
     ALOGE("Call loadAttributes() with filename is %s. Loading exif info\n", filename);
 #endif
-    loadExifInfo(filename, TRUE);
+    if (!loadExifInfo(filename, TRUE))
+        goto exit;
 
 #ifdef SUPERDEBUG
 //    DumpExifMap = TRUE;
@@ -325,6 +326,7 @@ static void saveAttributes(JNIEnv *env, jobject jobj, jstring jfilename, jstring
     if (thumbnailData) {
         copyThumbnailData(thumbnailData, thumbnailLength);
     }
+    DiscardData();
 
 exit:
 #ifdef SUPERDEBUG
@@ -442,7 +444,10 @@ static jbyteArray getThumbnail(JNIEnv *env, jobject jobj, jstring jfilename)
 
     const char* filename = (*env)->GetStringUTFChars(env, jfilename, NULL);
     if (filename) {
-        loadExifInfo(filename, FALSE);
+        if (!loadExifInfo(filename, FALSE)) {
+            (*env)->ReleaseStringUTFChars(env, jfilename, filename);
+            return NULL;
+        }
         Section_t* ExifSection = FindSection(M_EXIF);
         if (ExifSection == NULL ||  ImageInfo.ThumbnailSize == 0) {
 #ifdef SUPERDEBUG
@@ -479,7 +484,10 @@ static jlongArray getThumbnailRange(JNIEnv *env, jobject jobj, jstring jfilename
     jlongArray resultArray = NULL;
     const char* filename = (*env)->GetStringUTFChars(env, jfilename, NULL);
     if (filename) {
-        loadExifInfo(filename, FALSE);
+        if (!loadExifInfo(filename, FALSE)){
+            (*env)->ReleaseStringUTFChars(env, jfilename, filename);
+            return NULL;
+        }
         Section_t* ExifSection = FindSection(M_EXIF);
         if (ExifSection == NULL || ImageInfo.ThumbnailSize == 0) {
             goto done;
@@ -566,7 +574,10 @@ static jstring getAttributes(JNIEnv *env, jobject jobj, jstring jfilename)
     ALOGE("******************************** getAttributes\n");
 #endif
     const char* filename = (*env)->GetStringUTFChars(env, jfilename, NULL);
-    loadExifInfo(filename, FALSE);
+    if (!loadExifInfo(filename, FALSE)) {
+        (*env)->ReleaseStringUTFChars(env, jfilename, filename);
+        return NULL;
+    }
 #ifdef SUPERDEBUG
     ShowImageInfo(TRUE);
 #endif
