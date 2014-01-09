@@ -233,6 +233,7 @@ static void saveAttributes(JNIEnv *env, jobject jobj, jstring jfilename, jstring
     int hasDateTimeTag = FALSE;
     int gpsTagCount = 0;
     int exifTagCount = 0;
+    int loadRet = 0;
 
     for (i = 0; i < attrCnt; i++) {
         // get an element from the attribute string and add it to the c structure
@@ -297,7 +298,7 @@ static void saveAttributes(JNIEnv *env, jobject jobj, jstring jfilename, jstring
 #ifdef SUPERDEBUG
     ALOGE("Call loadAttributes() with filename is %s. Loading exif info\n", filename);
 #endif
-    loadExifInfo(filename, TRUE);
+    loadRet = loadExifInfo(filename, TRUE);
 
 #ifdef SUPERDEBUG
 //    DumpExifMap = TRUE;
@@ -347,6 +348,8 @@ exit:
     if (thumbnailData) {
         free(thumbnailData);
     }
+    if (loadRet)
+        DiscardData();
 #ifdef SUPERDEBUG
     ALOGE("returning from saveAttributes");
 #endif
@@ -440,9 +443,10 @@ static jbyteArray getThumbnail(JNIEnv *env, jobject jobj, jstring jfilename)
     ALOGE("******************************** getThumbnail\n");
 #endif
 
+    int loadRet = 0;
     const char* filename = (*env)->GetStringUTFChars(env, jfilename, NULL);
     if (filename) {
-        loadExifInfo(filename, FALSE);
+        loadRet = loadExifInfo(filename, FALSE);
         Section_t* ExifSection = FindSection(M_EXIF);
         if (ExifSection == NULL ||  ImageInfo.ThumbnailSize == 0) {
 #ifdef SUPERDEBUG
@@ -464,22 +468,25 @@ static jbyteArray getThumbnail(JNIEnv *env, jobject jobj, jstring jfilename)
     ALOGE("thumbnail size %d\n", ImageInfo.ThumbnailSize);
 #endif
         (*env)->ReleaseStringUTFChars(env, jfilename, filename);
-        DiscardData();
+        if (loadRet)
+            DiscardData();
         return byteArray;
     }
 noThumbnail:
     if (filename) {
         (*env)->ReleaseStringUTFChars(env, jfilename, filename);
     }
-    DiscardData();
+    if (loadRet)
+        DiscardData();
     return NULL;
 }
 
 static jlongArray getThumbnailRange(JNIEnv *env, jobject jobj, jstring jfilename) {
+    int loadRet = 0;
     jlongArray resultArray = NULL;
     const char* filename = (*env)->GetStringUTFChars(env, jfilename, NULL);
     if (filename) {
-        loadExifInfo(filename, FALSE);
+        loadRet = loadExifInfo(filename, FALSE);
         Section_t* ExifSection = FindSection(M_EXIF);
         if (ExifSection == NULL || ImageInfo.ThumbnailSize == 0) {
             goto done;
@@ -500,7 +507,8 @@ done:
     if (filename) {
         (*env)->ReleaseStringUTFChars(env, jfilename, filename);
     }
-    DiscardData();
+    if (loadRet)
+        DiscardData();
     return resultArray;
 }
 
@@ -565,8 +573,9 @@ static jstring getAttributes(JNIEnv *env, jobject jobj, jstring jfilename)
 #ifdef SUPERDEBUG
     ALOGE("******************************** getAttributes\n");
 #endif
+    int loadRet = 0;
     const char* filename = (*env)->GetStringUTFChars(env, jfilename, NULL);
-    loadExifInfo(filename, FALSE);
+    loadRet = loadExifInfo(filename, FALSE);
 #ifdef SUPERDEBUG
     ShowImageInfo(TRUE);
 #endif
@@ -745,7 +754,8 @@ static jstring getAttributes(JNIEnv *env, jobject jobj, jstring jfilename)
 #endif
     jstring result = ((*env)->NewStringUTF(env, finalResult));
     free(finalResult);
-    DiscardData();
+    if (loadRet)
+        DiscardData();
     return result;
 }
 
