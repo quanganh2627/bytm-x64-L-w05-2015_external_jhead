@@ -204,6 +204,7 @@ static void saveAttributes(JNIEnv *env, jobject jobj, jstring jfilename, jstring
     const char* filename = NULL;
     uchar* thumbnailData = NULL;
     int attrCnt = 0;
+    int loadRet = 0;
     const char* attributes = (*env)->GetStringUTFChars(env, jattributes, NULL);
     if (attributes == NULL) {
         goto exit;
@@ -233,7 +234,6 @@ static void saveAttributes(JNIEnv *env, jobject jobj, jstring jfilename, jstring
     int hasDateTimeTag = FALSE;
     int gpsTagCount = 0;
     int exifTagCount = 0;
-    int loadRet = 0;
 
     for (i = 0; i < attrCnt; i++) {
         // get an element from the attribute string and add it to the c structure
