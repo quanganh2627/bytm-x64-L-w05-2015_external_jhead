@@ -550,6 +550,7 @@ int ReadJpegFile(const char * FileName, ReadMode_t ReadMode)
     if (infile == NULL) {
         ALOGE("can't open '%s'", FileName);
         fprintf(stderr, "can't open '%s'\n", FileName);
+        DiscardData();
         return FALSE;
     }
 
