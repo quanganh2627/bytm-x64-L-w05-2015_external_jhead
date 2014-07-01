@@ -248,6 +248,7 @@ Section_t * CreateSection(int SectionType, unsigned char * Data, int size);
 void ResetJpgfile(void);
 int ReadJpegSectionsFromBuffer (unsigned char* buffer, unsigned int buffer_size, ReadMode_t ReadMode);
 int WriteJpegToBuffer(unsigned char* buffer, unsigned int buffer_size);
+void UnlockMutex(void);
 
 // Variables from jhead.c used by exif.c
 extern ImageInfo_t ImageInfo;

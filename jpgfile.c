@@ -1070,3 +1070,9 @@ void ResetJpgfile(void)
     SectionsRead = 0;
     HaveAll = 0;
 }
+
+void UnlockMutex(void)
+{
+    // we finished parsing file, unlock mutex.
+    pthread_mutex_unlock(&mutex);
+}

@@ -349,7 +349,7 @@ exit:
         free(thumbnailData);
     }
     if (loadRet)
-        DiscardData();
+        UnlockMutex();
 #ifdef SUPERDEBUG
     ALOGE("returning from saveAttributes");
 #endif
